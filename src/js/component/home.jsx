@@ -1,206 +1,196 @@
-import React, {useState, useEffect, useRef} from "react";
-import {BsFillPlayCircleFill, BsFillPauseCircleFill, BsFillSkipStartCircleFill, BsSkipEndCircleFill, BsFillSkipEndCircleFill} from 'react-icons/bs';
+import React, { useState, useEffect, useRef } from "react";
 
-//create your first component
 const Home = () => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [songs, setSongs] = useState([]);
+  const [volume, setVolume] = useState(0.5);
+  const [playing, setPlaying] = useState(false);
+  const [loop, setLoop] = useState(false);
+  const [repeat, setRepeat] = useState(false);
+  const audioRef = useRef(null);
 
-	//declaracion de estados
-	// espacio de memoria, la funcion que actualiza el valor inicial
-	const [songs, setSongs]=useState([])//2. creamos un estado del array songs
-	const [playing, setPlaying] = useState(false);
-	const [currentSong, setCurrentSong] = useState(0);
-	const audioElem = useRef();
+  function playSong(index) {
+    let selectedSong = songs[index];
+    const urlTema =
+      "https://assets.breatheco.de/apis/sound/" + selectedSong.url;
+    audioRef.current.src = urlTema;
+    setCurrentIndex(index);
+    audioRef.current.play();
+    setPlaying(true);
 
-	// const [volume, setVolume] = useState(0.5);
-	// const [keepPlaying, setKeepPlaying] = useState(false);
-	// const [seguir, setSeguir] = useState(false);
-  	// const [repeat, setRepeat] = useState(false);
-	// const selectedSong = songs[index];
-	// const urlSong = "https://assets.breatheco.de/apis/sound/" + selectedSong.url;
+    if (repeat) {
+      audioRef.current.onended = () => {
+        playSong(index);
+      };
+    } else {
+      audioRef.current.onended = () => {
+        if (loop) {
+          let nextIndex = index + 1;
+          if (nextIndex === songs.length) {
+            nextIndex = 0;
+          }
+          playSong(nextIndex);
+        }
+      };
+    }
+  }
 
-	useEffect(()=>{
-		//codigo a ejecutar
-		console.log("La pagina se ha cargado exitosamente");
-		fetch('https://assets.breatheco.de/apis/sound/songs') //1.ir a buscar info en la url
-		.then((response)=>response.json()) //2.Convierte la respuesta en un json
-		// .then((data)=>console.log(data));
-		.then((data)=>setSongs(data)) //3. Guarda el json en un objeto data
-	},[])//cuando el array está vacio él va a cargar el codigo a ejecutar UNA vez cargada la página
-	console.log(songs);
+  function pauseSong() {
+    if (playing) {
+      audioRef.current.pause();
+      setPlaying(false);
+    } else {
+      continuePlaying();
+    }
+  }
 
-	useEffect(() => {
-		if (playing) {
-		  audioElem.current.play();
-		}
-		else {
-		  audioElem.current.pause();
-		}
-	}, [playing])
+  function loopPlaying(index) {
+    let selectedSong = songs[index];
+    const urlTema =
+      "https://assets.breatheco.de/apis/sound/" + selectedSong.url;
+    audioRef.current.src = urlTema;
+    setCurrentIndex(index);
+    audioRef.current.play();
+    setPlaying(true);
+    loop ? index++ : "";
+    if (nextIndex === songs.length) {
+      nextIndex = 0;
+    }
+    loop
+      ? (audioRef.current.onended = () => {
+          loopPlaying(index);
+        })
+      : "";
+  }
 
-	const onPlaying = () => {
-		const duration = audioElem.current.duration;
-		const ct = audioElem.current.currentTime;
-		setCurrentSong({ ...currentSong, "progress": ct / duration * 100, "length": duration })
-	}
+  function continuePlaying() {
+    audioRef.current.play();
+    setPlaying(true);
+  }
 
-	const Player = ({audioElem, playing, setPlaying, currentSong, setCurrentSong, songs})=> {
-		const clickRef = useRef();
-		const PlayPause = ()=>
-		{
-		  setPlaying(!playing);
-		}
-		
+  function nextSong() {
+    let nextIndex = currentIndex + 1;
+    if (nextIndex === songs.length) {
+      nextIndex = 0;
+    }
+    playSong(nextIndex);
+  }
 
+  function previousSong() {
+    let previousIndex = currentIndex - 1;
+    if (previousIndex < 0) {
+      previousIndex = songs.length - 1;
+    }
+    playSong(previousIndex);
+  }
 
-	function playSong(index) {
-		// let selectedSong = songs[index];
-		// const urlSong = "https://assets.breatheco.de/apis/sound/" + selectedSong.url;
-		audioElem.current.src = urlSong;
-		selectedCurrentSong(index);
-		audioElem.current.play();
-		setPlaying(true);
+  function playMusic() {
+    const urlTema =
+      "https://www.televisiontunes.com/uploads/audio/Pac%20Man%20-%20Techno%20Remix.mp3";
+    audioRef.current.src = urlTema;
+    setCurrentIndex(Math.floor(Math.random() * songs.length));
+    audioRef.current.play();
+    setPlaying(true);
 
-		if (repeat) {
-			audioElem.current.onended = () => {
-				playSong(index);
-			};
-		  } else {
-			audioElem.current.onended = () => {
-			  if (seguir) {
-				let nextIndex = index + 1;
-				if (nextIndex === canciones.length) {
-					nextIndex = 0;
-				}
-				playSong(nextIndex);
-			  }
-			};
-		  }
-	}
+    if (repeat) {
+      audioRef.current.onended = () => {
+        playSong(index);
+      };
+    } else {
+      audioRef.current.onended = () => {
+        if (loop) {
+          let nextIndex = index + 1;
+          if (nextIndex === songs.length) {
+            nextIndex = 0;
+          }
+          playSong(nextIndex);
+        }
+      };
+    }
+  }
 
-	function pauseSong() {
-		if (playing) {
-		  audioElem.current.pause();
-		  setPlaying(false);
-		} else {
-			contPlaying();
-		}
-	  }
+  function volUp() {
+    let vol = volume + 0.1;
+    if (vol > 1) {
+      vol = 1;
+    }
+    setVolume(vol);
+    audioRef.current.volume = vol;
+  }
 
-	  function contPlaying() {
-		audioElem.current.play();
-		setPlaying(true);
-	  }
+  function volDown() {
+    let vol = volume - 0.1;
+    if (vol < 0) {
+      vol = 0;
+    }
+    setVolume(vol);
+    audioRef.current.volume = vol;
+  }
 
-	  function keepPlaying(index) {
-		// let selectedSong = songs[index];
-		// const urlTema = "https://assets.breatheco.de/apis/sound/" + selectedSong.url;
-		audioElem.current.src = urlSong;
-		selectedCurrentSong(index);
-		audioElem.current.play();
-		setKeepPlaying(true);
-		seguir ? index++ : "";
-		if (nextIndex === songs.length) {
-		  nextIndex = 0;
-		}
-		seguir
-		  ? (audioElem.current.onended = () => {
-			  keepPlaying(index);
-			})
-		  : "";
-	  }
+  function settingLoop() {
+    loop ? setLoop(false) : setLoop(true);
+  }
 
-	  function reanudarTema() {
-		audioElem.current.play();
-		setReproduciendo(true);
-	  }
-	function nextSong() {
-		let nextIndex = currentSong+ 1;
-		if(nextIndex === songs.length) {
-			nextIndex = 0;
-		}
-		playSong(nextIndex);
-	  }
+  useEffect(() => {
+    fetch("https://assets.breatheco.de/apis/sound/songs")
+      .then((response) => response.json())
+      .then((data) => setSongs(data));
+  }, []);
 
-	function prevSong() {
-		let prevIndex = currentSong- 1;
-		if(prevIndex < 0) {
-			prevIndex = songs.length-1;
-		}
-		playSong(prevIndex);
-	  }
+  return (
+    <>
+      
 
-	  return (
-		
-		<div className="bg-dark">
-			<div className="App">
-      			<audio src={currentSong.url} ref={audioElem} onTimeUpdate={onPlaying} />
-     			<Player songs={songs} setSongs={setSongs} isplaying={playing} setisplaying={setPlaying} audioElem={audioElem} currentSong={currentSong} setCurrentSong={setCurrentSong} />
-    		</div>
-			<div className="text-center sticky-top">
-				<img src="https://www.beatmashmagazine.com/wp-content/uploads/2012/01/Music-Games.jpg" style={{widght: 1800}}></img></div>
-				<ul>
-				{canciones.map((item, index)=><div className="row"><button type="button" className="btn btn-outline-success col-6 mx-auto" onClick={()=>reprodicirTema(index)} key={item.id}>{item.name} </button></div>)}
-				</ul>
-				<div className="bg-success text-center sticky-bottom">
-					<div className="text-center row">
-						<audio ref={audioElem} className="bg-info"></ audio>
-						<button type="button" className="btn btn-outline-dark col-1 mx-auto" onClick={retrocederTema}> Anterior </button>  
-						<button type="button" className="btn btn-outline-dark col-1 mx-auto" onClick={pausarTema}> Pausar </button> 
-						<button type="button" className="btn btn-outline-dark col-1 mx-auto" onClick={adelantarTema}> Siguiente </button> 
-					</div>
+    	<div className="bg-image pt-3"
+	  		style={{backgroundImage: "url('https://img.freepik.com/premium-vector/cute-purple-aesthetic-abstract-minimal-background-perfect-wallpaper-backdrop-postcard-background_565280-448.jpg?w=2000')"}}>
+				<nav className="navbar bg-image d-flex sticky-top">
+        	<button type="button" className="btn btn-outline mx-auto" onClick={playMusic}>
+          		<img src="https://www.pngimages.pics/images/quotes/english/general/transparent-music-notes-drawing-music-52650-218288.png" style={{height: "100", width: "180px"}}></img>
+        	</button>
+      </nav>
+        <ul> {songs.map((item, index) => (
+            <div className="row">
+              <button type="button" className={`btn col-6 mx-auto ${
+                  index === currentIndex ? "btn-dark" : "btn-outline-dark"
+                }`} onClick={() => playSong(index)} key={item.id}>
+                {item.name}{" "} </button>
+            </div>
+          	))}
+        </ul>
+        <div className="text-center sticky-bottom py-1 justify-content-center" style={{backgroundColor: "RGB(180, 146, 226)"}}>
+          <div className="text-center row">
+            	<audio ref={audioRef} className="bg-info"></audio>
+				<div className="col-4">
+            		<button type="button" className="btn mx-2" onClick={volDown}>
+              			{" "}<img src="https://thenounproject.com/api/private/icons/425114/edit/?backgroundShape=SQUARE&backgroundShapeColor=%23000000&backgroundShapeOpacity=0&exportSize=752&flipX=false&flipY=false&foregroundColor=%23000000&foregroundOpacity=1&imageFormat=png&rotation=0&token=gAAAAABjxY8Oi7raM3Au6XLXc2vEAYSUlLtCfgrwiZRoMhhY0L6meRYenAlLEiGEW5fNifTSMoDf_NwzY8_0wdOR-uOU2g_CGA%3D%3D" style={{height: "60px", width: "60px"}}/>{" "}
+            		</button>
+            		<button type="button" className="btn mx-2" onClick={volUp}>
+              			{" "}<img src="https://thenounproject.com/api/private/icons/425116/edit/?backgroundShape=SQUARE&backgroundShapeColor=%23000000&backgroundShapeOpacity=0&exportSize=752&flipX=false&flipY=false&foregroundColor=%23000000&foregroundOpacity=1&imageFormat=png&rotation=0&token=gAAAAABjxY8Oi7raM3Au6XLXc2vEAYSUlLtCfgrwiZRoMhhY0L6meRYenAlLEiGEW5fNifTSMoDf_NwzY8_0wdOR-uOU2g_CGA%3D%3D" style={{height: "60px", width: "60px"}}/>{" "}
+            		</button>
 				</div>
-			</div>
-	);
+				<div className="col-4">
+					<button type="button" className="btn mx-1" onClick={previousSong}>
+              			{" "}<img src="https://thenounproject.com/api/private/icons/2665183/edit/?backgroundShape=SQUARE&backgroundShapeColor=%23000000&backgroundShapeOpacity=0&exportSize=752&flipX=false&flipY=false&foregroundColor=%23000000&foregroundOpacity=1&imageFormat=png&rotation=0&token=gAAAAABjxY8Oi7raM3Au6XLXc2vEAYSUlLtCfgrwiZRoMhhY0L6meRYenAlLEiGEW5fNifTSMoDf_NwzY8_0wdOR-uOU2g_CGA%3D%3D" style={{height: "60px", width: "60px"}}/>{" "}
+					</button>
+            		<button type="button" className="btn mx-1"
+						onClick={playing ? pauseSong : continuePlaying}>
+              	 		{playing ? <img src="https://thenounproject.com/api/private/icons/425202/edit/?backgroundShape=SQUARE&backgroundShapeColor=%23000000&backgroundShapeOpacity=0&exportSize=752&flipX=false&flipY=false&foregroundColor=%23000000&foregroundOpacity=1&imageFormat=png&rotation=0&token=gAAAAABjxY8Oi7raM3Au6XLXc2vEAYSUlLtCfgrwiZRoMhhY0L6meRYenAlLEiGEW5fNifTSMoDf_NwzY8_0wdOR-uOU2g_CGA%3D%3D" style={{height: "60px", width: "60px"}}/> : <img src="https://thenounproject.com/api/private/icons/425112/edit/?backgroundShape=SQUARE&backgroundShapeColor=%23000000&backgroundShapeOpacity=0&exportSize=752&flipX=false&flipY=false&foregroundColor=%23000000&foregroundOpacity=1&imageFormat=png&rotation=0&token=gAAAAABjxY8Oi7raM3Au6XLXc2vEAYSUlLtCfgrwiZRoMhhY0L6meRYenAlLEiGEW5fNifTSMoDf_NwzY8_0wdOR-uOU2g_CGA%3D%3D" style={{height: "70px", width: "70px"}}/>}
+					</button>
+            		<button  type="button" className="btn mx-1" onClick={nextSong}>
+              			{" "}<img src="https://thenounproject.com/api/private/icons/2665182/edit/?backgroundShape=SQUARE&backgroundShapeColor=%23000000&backgroundShapeOpacity=0&exportSize=752&flipX=false&flipY=false&foregroundColor=%23000000&foregroundOpacity=1&imageFormat=png&rotation=0&token=gAAAAABjxY8Oi7raM3Au6XLXc2vEAYSUlLtCfgrwiZRoMhhY0L6meRYenAlLEiGEW5fNifTSMoDf_NwzY8_0wdOR-uOU2g_CGA%3D%3D" style={{height: "60px", width: "60px"}}/>{" "}
+					</button>
+				</div>
+				<div className="col-4 justify-content-center">
+            		<button type="button" className="btn mx-2" onClick={settingLoop}>
+              			{loop ? "Playing" : <img src="https://thenounproject.com/api/private/icons/425107/edit/?backgroundShape=SQUARE&backgroundShapeColor=%23000000&backgroundShapeOpacity=0&exportSize=752&flipX=false&flipY=false&foregroundColor=%23000000&foregroundOpacity=1&imageFormat=png&rotation=0&token=gAAAAABjxY8Oi7raM3Au6XLXc2vEAYSUlLtCfgrwiZRoMhhY0L6meRYenAlLEiGEW5fNifTSMoDf_NwzY8_0wdOR-uOU2g_CGA%3D%3D" style={{height: "50px", width: "50px"}}/>}
+         			</button>
+              		<input type="checkbox" onChange={() => setRepeat(!repeat)}/><img src="https://thenounproject.com/api/private/icons/2665197/edit/?backgroundShape=SQUARE&backgroundShapeColor=%23000000&backgroundShapeOpacity=0&exportSize=752&flipX=false&flipY=false&foregroundColor=%23000000&foregroundOpacity=1&imageFormat=png&rotation=0&token=gAAAAABjxY8Oi7raM3Au6XLXc2vEAYSUlLtCfgrwiZRoMhhY0L6meRYenAlLEiGEW5fNifTSMoDf_NwzY8_0wdOR-uOU2g_CGA%3D%3D" style={{height: "50px", width: "50px"}}/>
+				</div>
+          	</div>
+     	</div>
+    </div>
+    </>
+  );
 };
-
-	
-
-// 	const play = (index) => {
-// 		setNumero(index);
-// 		setPlaying(true);
-// 		audioElem.current.play();
-// 	}
-
-// 	const pause = () => {
-// 		setPlaying(false);
-// 		audioElem.current.pause();
-// 	}
-
-// 	if (songs.length > 0 && numero >= 0 && numero < songs.length) {
-// 		return (
-// 			<>
-// 				<div className="wrapper">
-// 					<audio className="d-flex mx-auto"
-// 						ref={audioElem} id="audioPlayer"
-// 					/>
-// 					<div className="container bg-dark text-white sticky-sm-bottom mx-auto" style={{width: "50rem"}}>
-// 						<ol className="overflow-auto py-3">
-// 							{songs.map((item, index) => (
-// 								<li key={index} className={index === numero && playing ? "bg-secondary" : "white"}>
-// 									<button className="btn text-white" onClick={() => play(index)}>{item.name}</button>
-// 								</li>
-// 							))}
-// 						</ol>
-// 						<div className="container mx-auto">
-// 							<div className="fixed-bottom d-flex mx-auto bg-dark justify-content-center">
-// 								<button className="btn btn-secondary" onClick={() => (numero == 0) ? setNumero(21) : setNumero(numero - 1)} >Anterior</button>
-// 								<button className="btn btn-secondary mx-3" onClick={() => playing ? pause() : play(numero)}>{playing ? <i class="fa fa-pause"></i> : <i class="fa fa-play"></i>}</button>
-// 								<button className="btn btn-secondary" onClick={() => (numero == 21) ? setNumero(0) : setNumero(numero + 1)}>Siguiente</button>
-// 							</div>
-// 						</div>
-// 					</div>
-// 				</div>
-// 			</>
-// 		// <>
-// 		// <div className="card mx-auto" style={{width: "30rem"}}>
-//   		// 	{/* dibujamos la lista de canciones */}
-//   		// 	<ol className="list-group list-group-flush">
-// 		// 	{songs.map((item) =><li key={item.id} className="list-group-item">{item.name} -</li>)}
-// 		// 	</ol>
-// 		// </div>
-// 		// </>
-// 	);}
-// 	return <div>Loading...</div>
-// };
 
 export default Home;
